@@ -1,5 +1,6 @@
 import pygame
 from pathlib import Path
+from player import Player
 
 BASE = Path(__file__).resolve().parent
 def asset(*p): return str(BASE.joinpath(*p))
@@ -19,15 +20,11 @@ class Jeu:
         except:
             pass
 
-        # Sonic : rectangle ou sprite
         try:
-            self.sonic_img = pygame.image.load(asset("sprites", "sonic_direction_haut.png")).convert_alpha()
+            sonic_img = pygame.image.load(asset("sprites", "sonic_direction_haut.png")).convert_alpha()
         except:
-            self.sonic_img = None
-
-        self.sonic_rect = pygame.Rect(100, FLOOR_Y-48, 32, 48)
-        self.vel_y = 0
-        self.on_ground = True
+            sonic_img = None
+        self.player = Player(sonic_img, (100, FLOOR_Y - 48))
 
         # Anneaux
         try:
@@ -42,27 +39,9 @@ class Jeu:
 
         self.clock = pygame.time.Clock()
 
-    def handle_input(self, dt):
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_LEFT]:
-            self.sonic_rect.x -= int(220 * dt)
-        if keys[pygame.K_RIGHT]:
-            self.sonic_rect.x += int(220 * dt)
-        if keys[pygame.K_SPACE] and self.on_ground:
-            self.vel_y = -420
-            self.on_ground = False
-
-    def physics(self, dt):
-        self.vel_y += 1200 * dt
-        self.sonic_rect.y += int(self.vel_y * dt)
-        if self.sonic_rect.bottom >= FLOOR_Y:
-            self.sonic_rect.bottom = FLOOR_Y
-            self.vel_y = 0
-            self.on_ground = True
-
     def collect_rings(self):
         for r in self.rings[:]:
-            if self.sonic_rect.colliderect(r):
+            if self.player.rect.colliderect(r):
                 self.rings.remove(r)
                 self.score += 1
 
@@ -74,10 +53,8 @@ class Jeu:
                 self.window.blit(self.ring_img, r)
             else:
                 pygame.draw.ellipse(self.window, (255, 215, 0), r, 3)
-        if self.sonic_img:
-            self.window.blit(self.sonic_img, self.sonic_rect)
-        else:
-            pygame.draw.rect(self.window, (0, 120, 255), self.sonic_rect)
+
+        self.player.draw(self.window)
         txt = self.font.render(f"Points : {self.score}", True, (255,255,255))
         self.window.blit(txt, (10, 10))
         pygame.display.flip()
@@ -89,8 +66,8 @@ class Jeu:
             for e in pygame.event.get():
                 if e.type == pygame.QUIT:
                     run = False
-            self.handle_input(dt)
-            self.physics(dt)
+            self.player.handle_input(dt)
+            self.player.physics(dt, FLOOR_Y)
             self.collect_rings()
             self.draw()
         pygame.quit()
