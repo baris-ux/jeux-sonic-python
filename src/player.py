@@ -1,8 +1,6 @@
-# src/player.py
 import pygame
 from pathlib import Path
 
-# Chemins d'assets : main.py est dans src/, on remonte d'un cran vers la racine du projet
 BASE = Path(__file__).resolve().parent.parent
 def asset(*parts):
     return str(BASE.joinpath(*parts))
@@ -15,13 +13,11 @@ def load_image(*parts):
 
 class Player:
     def __init__(self, img, start_pos, w=32, h=48):
-        # sprite par défaut (repos)
         if img:
             img = pygame.transform.scale(img, (w, h))
         self.default_img = img
         self.image = img
 
-        # boite du joueur
         self.rect = pygame.Rect(start_pos[0], start_pos[1], w, h)
 
         # physique / états
@@ -34,7 +30,7 @@ class Player:
         # --- Animation "flèche bas" (one-shot) ---
         # Charge sonic_0.png .. sonic_5.png depuis sprites/deplacement_en_bas/
         self.down_frames = []
-        for i in range(6):
+        for i in range(4):
             frame = load_image("sprites", "deplacement_en_bas", f"sonic_{i}.png")
             if frame:
                 self.down_frames.append(pygame.transform.scale(frame, (w, h)))
@@ -46,8 +42,13 @@ class Player:
         self.down_timer = 0.0           # chrono pour avancer
         self.down_frame_time = 0.06     # durée d'une frame (secondes)
 
+        self._space_was_down = False
+        
     def handle_input(self, dt):
         keys = pygame.key.get_pressed()
+        down_now  = keys[pygame.K_DOWN]
+        space_now = keys[pygame.K_SPACE]
+        space_pressed = space_now and not self._space_was_down  # appui instantané
 
         # Déplacements horizontaux
         dx = 0
@@ -57,42 +58,50 @@ class Player:
             dx += self.speed * dt
         self.rect.x += int(dx)
 
-        # Saut
-        if keys[pygame.K_SPACE] and self.on_ground:
+        # --- Cas spécial ↓ + Espace : montrer sonic_3.png (sans saut) ---
+        if down_now and space_now and self.on_ground and len(self.down_frames) >= 4:
+            self.image = self.down_frames[3]  # sonic_3.png
+            self._space_was_down = space_now
+            return
+
+        # Saut : seulement à l'appui, et seulement si ↓ n'est pas tenue
+        if space_pressed and self.on_ground and not down_now:
             self.vel_y = self.jump_velocity
             self.on_ground = False
 
-        # Gestion animation flèche bas (one-shot, seulement au sol)
-        if keys[pygame.K_DOWN] and self.on_ground and self.down_frames:
-            # Démarrage si autorisé et pas déjà en cours
+        # Animation ↓ normale : 0 -> 2, puis on fige
+        if down_now and self.on_ground and self.down_frames:
+            max_index = min(2, len(self.down_frames) - 1)  # stop à sonic_2
+
             if self.down_can_restart and not self.down_playing:
                 self.down_playing = True
                 self.down_can_restart = False
                 self.down_index = 0
                 self.down_timer = 0.0
 
-            # Avancer l'anim sans boucler
             if self.down_playing:
                 self.down_timer += dt
-                while self.down_timer >= self.down_frame_time and self.down_index < len(self.down_frames) - 1:
+                while self.down_timer >= self.down_frame_time and self.down_index < max_index:
                     self.down_timer -= self.down_frame_time
                     self.down_index += 1
 
-                # Afficher la frame courante
                 self.image = self.down_frames[self.down_index]
 
-                # Arrivé à la dernière -> figer (stopper playing, pas de loop)
-                if self.down_index == len(self.down_frames) - 1:
+                if self.down_index == max_index:
                     self.down_playing = False
             else:
-                # déjà figé sur la dernière frame ou pas de progression
                 self.image = self.down_frames[self.down_index]
         else:
+            # reset
             self.down_playing = False
             self.down_can_restart = True
             self.down_index = 0
             self.down_timer = 0.0
             self.image = self.default_img
+
+        # MàJ du mémo espace
+        self._space_was_down = space_now
+
 
     def physics(self, dt, floor_y=700):
         # Gravité + collision sol
