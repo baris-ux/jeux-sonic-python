@@ -43,12 +43,14 @@ class Player:
         self.down_frame_time = 0.06     # durée d'une frame (secondes)
 
         self._space_was_down = False
-        
+        self._combo_was_active = False
+
     def handle_input(self, dt):
         keys = pygame.key.get_pressed()
         down_now  = keys[pygame.K_DOWN]
         space_now = keys[pygame.K_SPACE]
         space_pressed = space_now and not self._space_was_down  # appui instantané
+        combo_now = down_now and space_now and self.on_ground and len(self.down_frames) >= 4
 
         # Déplacements horizontaux
         dx = 0
@@ -58,49 +60,53 @@ class Player:
             dx += self.speed * dt
         self.rect.x += int(dx)
 
-        # --- Cas spécial ↓ + Espace : montrer sonic_3.png (sans saut) ---
-        if down_now and space_now and self.on_ground and len(self.down_frames) >= 4:
+        # --- Cas spécial ↓ + Espace : montrer sonic_3.png (sans saut, sans anim) ---
+        if combo_now:
             self.image = self.down_frames[3]  # sonic_3.png
-            self._space_was_down = space_now
-            return
+        else:
+            # Saut : seulement à l'appui, et seulement si ↓ n'est pas tenue
+            if space_pressed and self.on_ground and not down_now:
+                self.vel_y = self.jump_velocity
+                self.on_ground = False
 
-        # Saut : seulement à l'appui, et seulement si ↓ n'est pas tenue
-        if space_pressed and self.on_ground and not down_now:
-            self.vel_y = self.jump_velocity
-            self.on_ground = False
+            # Animation ↓ normale : 0 -> 2, puis fige
+            if down_now and self.on_ground and self.down_frames:
+                max_index = min(2, len(self.down_frames) - 1)
 
-        # Animation ↓ normale : 0 -> 2, puis on fige
-        if down_now and self.on_ground and self.down_frames:
-            max_index = min(2, len(self.down_frames) - 1)  # stop à sonic_2
+                if self.down_can_restart and not self.down_playing:
+                    self.down_playing = True
+                    self.down_can_restart = False
+                    self.down_index = 0
+                    self.down_timer = 0.0
 
-            if self.down_can_restart and not self.down_playing:
-                self.down_playing = True
-                self.down_can_restart = False
+                if self.down_playing:
+                    self.down_timer += dt
+                    while self.down_timer >= self.down_frame_time and self.down_index < max_index:
+                        self.down_timer -= self.down_frame_time
+                        self.down_index += 1
+
+                    self.image = self.down_frames[self.down_index]
+                    if self.down_index == max_index:
+                        self.down_playing = False
+                else:
+                    self.image = self.down_frames[self.down_index]
+            else:
+                # reset + image par défaut
+                self.down_playing = False
+                self.down_can_restart = True
                 self.down_index = 0
                 self.down_timer = 0.0
+                self.image = self.default_img
 
-            if self.down_playing:
-                self.down_timer += dt
-                while self.down_timer >= self.down_frame_time and self.down_index < max_index:
-                    self.down_timer -= self.down_frame_time
-                    self.down_index += 1
+        # --- DÉCLENCHEMENT DU DASH À LA RELÂCHE DE LA COMBO ↓+Espace ---
+        if self._combo_was_active and not combo_now:
+            self.rect.x += 100  # avance de 50px vers la droite (ajuste si tu veux gauche/droite)
 
-                self.image = self.down_frames[self.down_index]
-
-                if self.down_index == max_index:
-                    self.down_playing = False
-            else:
-                self.image = self.down_frames[self.down_index]
-        else:
-            # reset
-            self.down_playing = False
-            self.down_can_restart = True
-            self.down_index = 0
-            self.down_timer = 0.0
-            self.image = self.default_img
-
-        # MàJ du mémo espace
+        # Mémos d'état (toujours à la fin)
         self._space_was_down = space_now
+        self._down_was_down = down_now
+        self._combo_was_active = combo_now
+
 
 
     def physics(self, dt, floor_y=700):
