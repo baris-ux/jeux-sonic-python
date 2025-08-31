@@ -1,5 +1,5 @@
 import pygame
-from sonic import Jeu
+from main import Jeu
 
 class menu:
     def __init__(self):
