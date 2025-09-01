@@ -2,6 +2,7 @@ import pygame
 from pathlib import Path
 from player import Player
 from items import RingManager
+from enemy import Enemy
 
 #BASE = Path(__file__).resolve().parent
 BASE = Path(__file__).resolve().parent.parent
@@ -28,11 +29,12 @@ class Jeu:
         if icon:
             pygame.display.set_icon(icon)
 
-        # Sprite Sonic (repos)
         sonic_img = load_image("sprites", "sonic_repos", "sonic_0.png")
         if sonic_img:
             sonic_img = pygame.transform.scale(sonic_img, (32, 48))
         self.player = Player(sonic_img, (100, FLOOR_Y - 48))
+        self.enemy = Enemy((400, FLOOR_Y - 30), w=30, h=30) 
+        
 
         # Anneaux
         ring_img = load_image("anneau.png")
@@ -45,6 +47,7 @@ class Jeu:
         self.window.fill((0, 0, 0))
         pygame.draw.rect(self.window, (50, 50, 50), (0, FLOOR_Y, W, H - FLOOR_Y))
         self.rings.draw(self.window)
+        self.enemy.draw(self.window)
         self.player.draw(self.window)
         txt = self.font.render(f"Points : {self.rings.score}", True, (255, 255, 255))
         self.window.blit(txt, (10, 10))
@@ -60,6 +63,7 @@ class Jeu:
             self.player.handle_input(dt)
             self.player.physics(dt, FLOOR_Y)
             self.rings.collect(self.player.rect)
+            self.enemy.update(dt)
             self._draw()
         pygame.quit()
 
