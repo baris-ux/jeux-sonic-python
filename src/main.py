@@ -96,7 +96,10 @@ class Jeu:
                                 self.player.rect.x += 150
 
                             self.player.invincible_timer = 4.0
-                            self.rings.score = 0
+                            if self.player.drop_rings_sound and self.rings.score > 0: 
+                                self.player.drop_rings_sound.play()
+
+                            self.rings.score = 0 # importent :  On joue d'abord le son et pui on met a 0 le score sinon le son ne sera jamais joué si il perd ses anneau avant !
 
             self._draw()
         pygame.quit()

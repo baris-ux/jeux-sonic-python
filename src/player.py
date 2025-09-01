@@ -50,6 +50,13 @@ class Player:
             self.run_sound = None
             print("Impossible de charger le son de course:", e)
 
+        try:
+            self.drop_rings_sound = pygame.mixer.Sound(asset("sounds","drop_rings.wav"))
+            self.drop_rings_sound.set_volume(0.8)
+        except Exception as e:
+            self.drop_rings_sound = None
+            print("Impossible de charger le son de drop rings:", e)
+
 
         ################################################################################################################
 
