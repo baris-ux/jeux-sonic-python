@@ -27,7 +27,7 @@ class Player:
         # physique / états
         self.vel_y = 0
         self.on_ground = False
-        self.speed = 220
+        self.speed = 300
         self.jump_velocity = -420
         self.gravity = 1200
 
