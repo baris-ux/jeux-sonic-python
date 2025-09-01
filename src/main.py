@@ -44,6 +44,17 @@ class Jeu:
 
         self.font = pygame.font.Font(None, 32)
         self.clock = pygame.time.Clock()
+        
+        ########################################
+
+        try:
+            self.gain_ring_sound = pygame.mixer.Sound(asset("sounds","gain_ring.wav"))
+            self.gain_ring_sound.set_volume(0.8)
+        except Exception as e:
+            self.gain_ring_sound = None
+            print("Impossible de charger le son de drop rings:", e)
+
+        ############################################
 
     def _draw(self):
         self.window.fill((0, 0, 0))
@@ -65,7 +76,10 @@ class Jeu:
                     run = False
             self.player.handle_input(dt)
             self.player.physics(dt, FLOOR_Y)
-            self.rings.collect(self.player.rect)
+
+            collected = self.rings.collect(self.player.rect) or 0
+            if collected > 0 and self.gain_ring_sound:
+                self.gain_ring_sound.play()
 
             if self.player.invincible_timer > 0:
                 self.player.invincible_timer = max(0.0, self.player.invincible_timer - dt)

@@ -12,10 +12,13 @@ class RingManager:
         self.score = 0
 
     def collect(self, player_rect):
+        collected = 0
         for r in self.rings[:]:
             if player_rect.colliderect(r):
                 self.rings.remove(r)
                 self.score += 1
+                collected += 1
+        return collected
 
     def draw(self, window):
         for r in self.rings:
