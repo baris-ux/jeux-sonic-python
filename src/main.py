@@ -64,6 +64,19 @@ class Jeu:
             self.player.physics(dt, FLOOR_Y)
             self.rings.collect(self.player.rect)
             self.enemy.update(dt)
+
+            if self.player.rect.colliderect(self.enemy.rect) and self.player.invincible_timer <= 0:
+                print("touché par ennemy !")
+                self.player.invincible_timer += 3.0
+                if self.player.rect.centerx < self.enemy.rect.centerx:
+                    self.player.rect.x -= 60 
+                else:
+                    self.player.rect.x += 60
+
+            if self.player.invincible_timer > 0:
+                self.player.invincible_timer -= dt 
+                    
+
             self._draw()
         pygame.quit()
 

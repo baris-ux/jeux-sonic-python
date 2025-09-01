@@ -31,6 +31,9 @@ class Player:
         self.jump_velocity = -620
         self.gravity = 1200
 
+        self.invincible_timer = 0.0 #si le joueur est touché on le rend invincible le temps de quelques seconde mais initalement il n'est pas invinscible
+
+
         #################################################################################################################""
 
         try: 
@@ -215,6 +218,11 @@ class Player:
 
     def draw(self, window):
         if self.image:
+            if self.invincible_timer > 0 :
+                self.image.set_alpha(120)
+            else :
+                self.image.set_alpha(255)
+            
             window.blit(self.image, self.rect)
         else:
             pygame.draw.rect(window, (0, 120, 255), self.rect, border_radius=6)
