@@ -31,6 +31,8 @@ class Player:
         self.jump_velocity = -420
         self.gravity = 1200
 
+        #################################################################################################################""
+
         try: 
             self.jump_sound = pygame.mixer.Sound(asset("sounds", "jump.wav"))
             self.jump_sound.set_volume(0.8)
@@ -38,9 +40,16 @@ class Player:
             self.jump_sound = None
             print("Impossible de charger le son de saut:", e)
 
+        try:
+            self.run_sound = pygame.mixer.Sound(asset("sounds", "run.wav"))
+            self.run_sound.set_volume(0.8)
+        except Exception as e:
+            self.run_sound = None
+            print("Impossible de charger le son de course:", e)
 
-        # --- Animation "flèche bas" (one-shot) ---
-        # Charge sonic_0.png .. sonic_5.png depuis sprites/deplacement_en_bas/
+
+        ################################################################################################################
+
         self.down_frames = []
         for i in range(4): # 0 à 2
             frame = load_image("sprites", "deplacement_en_bas", f"sonic_{i}.png")
@@ -59,6 +68,8 @@ class Player:
             frame = load_image("sprites", "deplacement_a_gauche", f'sonic_{i}.png')
             if frame:
                 self.left_frames.append(pygame.transform.scale(frame, (w, h)))
+
+    ############################################################################################################################################
 
         # État de l’anim
         self.down_playing = False       # en lecture ?
@@ -165,12 +176,9 @@ class Player:
         if self._combo_was_active and not combo_now:
             self.rect.x += 100  # avance de 50px vers la droite (ajuste si tu veux gauche/droite)
 
-        # Mémos d'état (toujours à la fin)
         self._space_was_down = space_now
         self._down_was_down = down_now
         self._combo_was_active = combo_now
-
-
 
     def physics(self, dt, floor_y=700):
         # Gravité + collision sol
