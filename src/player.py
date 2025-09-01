@@ -10,9 +10,13 @@ def load_image(*parts):
         return pygame.image.load(asset(*parts)).convert_alpha()
     except Exception:
         return None
+    
+pygame.mixer.pre_init(44100, -16, 2, 256)
+pygame.init()
+pygame.mixer.init()
 
 class Player:
-    def __init__(self, img, start_pos, w=64, h=64):
+    def __init__(self, img, start_pos, w=96, h=96):
         if img:
             img = pygame.transform.scale(img, (w, h))
         self.default_img = img
@@ -26,6 +30,14 @@ class Player:
         self.speed = 220
         self.jump_velocity = -420
         self.gravity = 1200
+
+        try: 
+            self.jump_sound = pygame.mixer.Sound(asset("sounds", "jump.wav"))
+            self.jump_sound.set_volume(0.8)
+        except Exception as e:
+            self.jump_sound = None
+            print("Impossible de charger le son de saut:", e)
+
 
         # --- Animation "flèche bas" (one-shot) ---
         # Charge sonic_0.png .. sonic_5.png depuis sprites/deplacement_en_bas/
@@ -91,6 +103,8 @@ class Player:
             if space_pressed and self.on_ground and not down_now:
                 self.vel_y = self.jump_velocity
                 self.on_ground = False
+                if self.jump_sound:
+                    self.jump_sound.play()
 
             # Animation ↓ normale : 0 -> 2, puis fige
             if down_now and self.on_ground and self.down_frames:
