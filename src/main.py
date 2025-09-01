@@ -33,7 +33,9 @@ class Jeu:
         if sonic_img:
             sonic_img = pygame.transform.scale(sonic_img, (32, 48))
         self.player = Player(sonic_img, (100, FLOOR_Y - 48))
-        self.enemy = Enemy((400, FLOOR_Y - 30), w=30, h=30) 
+        self.enemies = [
+            Enemy((400, FLOOR_Y - 30), w=30, h=30)
+        ]
         
 
         # Anneaux
@@ -47,7 +49,8 @@ class Jeu:
         self.window.fill((0, 0, 0))
         pygame.draw.rect(self.window, (50, 50, 50), (0, FLOOR_Y, W, H - FLOOR_Y))
         self.rings.draw(self.window)
-        self.enemy.draw(self.window)
+        for enemy in self.enemies:
+            enemy.draw(self.window)
         self.player.draw(self.window)
         txt = self.font.render(f"Points : {self.rings.score}", True, (255, 255, 255))
         self.window.blit(txt, (10, 10))
@@ -63,19 +66,34 @@ class Jeu:
             self.player.handle_input(dt)
             self.player.physics(dt, FLOOR_Y)
             self.rings.collect(self.player.rect)
-            self.enemy.update(dt)
 
-            if self.player.rect.colliderect(self.enemy.rect) and self.player.invincible_timer <= 0:
-                print("touché par ennemy !")
-                self.player.invincible_timer += 3.0
-                if self.player.rect.centerx < self.enemy.rect.centerx:
-                    self.player.rect.x -= 60 
-                else:
-                    self.player.rect.x += 60
+            for enemy in self.enemies[:]:   # [:] = copie pour pouvoir remove
+                enemy.update(dt)
 
-            if self.player.invincible_timer > 0:
-                self.player.invincible_timer -= dt 
-                    
+                if self.player.rect.colliderect(enemy.rect):
+                    overlap = self.player.rect.clip(enemy.rect)
+
+                    if overlap.width > overlap.height:
+                        # collision verticale
+                        if self.player.rect.centery < enemy.rect.centery:
+                            print("Sonic a touché l'ennemi PAR LE HAUT")
+                            self.enemies.remove(enemy)   # supprimer cet ennemi
+                            self.player.vel_y = -400     # rebond
+                        else:
+                            print("Sonic a touché l'ennemi PAR LE BAS")
+                    else:
+                        # collision horizontale
+                        if self.player.invincible_timer <= 0: 
+                            if self.player.rect.centerx < enemy.rect.centerx:
+                                print("Sonic a touché l'ennemi PAR LA GAUCHE")
+                                self.player.rect.x -= 150
+                                self.player.invincible_timer += 4.0
+                            else:
+                                print("Sonic a touché l'ennemi PAR LA DROITE")
+                                self.player.rect.x += 150
+                                self.player.invincible_timer += 4.0
+
+                            self.player.invincible_timer = 4.0
 
             self._draw()
         pygame.quit()
