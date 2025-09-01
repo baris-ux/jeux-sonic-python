@@ -31,6 +31,8 @@ class Player:
         self.jump_velocity = -420
         self.gravity = 1200
 
+        self._is_running_sound = False
+
         #################################################################################################################""
 
         try: 
@@ -154,6 +156,7 @@ class Player:
                         if self.right_index >= len(self.right_frames):
                             self.right_index = 8
                     self.image = self.right_frames[self.right_index]
+                    
 
                 elif self.on_ground and self.left_frames and dx < 0:
                     self.left_timer += dt
@@ -171,6 +174,18 @@ class Player:
                     self.right_timer = 0.0
                     self.left_timer = 0.0
                     self.image = self.default_img
+
+                is_running_now = (self.on_ground and abs(dx) > 0 and not down_now and not combo_now)
+
+                if self.run_sound:
+                    if is_running_now:
+                        if not self._is_running_sound:
+                            self.run_sound.play(-1)   # boucle tant qu'on court
+                            self._is_running_sound = True
+                    else:
+                        if self._is_running_sound:
+                            self.run_sound.stop()
+                            self._is_running_sound = False
 
         # --- DÉCLENCHEMENT DU DASH À LA RELÂCHE DE LA COMBO ↓+Espace ---
         if self._combo_was_active and not combo_now:
