@@ -41,6 +41,13 @@ class Player:
             if frame:
                 self.right_frames.append(pygame.transform.scale(frame, (w, h)))
 
+        
+        self.left_frames = []
+        for i in range(13): # 0 à 12
+            frame = load_image("sprites", "deplacement_a_gauche", f'sonic_{i}.png')
+            if frame:
+                self.left_frames.append(pygame.transform.scale(frame, (w, h)))
+
         # État de l’anim
         self.down_playing = False       # en lecture ?
         self.down_can_restart = True    # autorisé à redémarrer sur prochain appui ?
@@ -51,6 +58,10 @@ class Player:
         self.right_index = 0
         self.right_timer = 0.0
         self.right_frame_time = 0.08
+
+        self.left_index = 0
+        self.left_timer = 0.0
+        self.left_frame_time = 0.08
 
         self._space_was_down = False
         self._combo_was_active = False
@@ -118,10 +129,22 @@ class Player:
                         if self.right_index >= len(self.right_frames):
                             self.right_index = 8
                     self.image = self.right_frames[self.right_index]
+
+                elif self.on_ground and self.left_frames and dx < 0:
+                    self.left_timer += dt
+                    while self.left_timer >= self.left_frame_time:
+                        self.left_timer -= self.left_frame_time
+                        self.left_index += 1
+                        if self.left_index >= len(self.left_frames):
+                            self.left_index = 8
+                    self.image = self.left_frames[self.left_index]
+
                 else:
                     # si on ne marche pas à droite → image par défaut
                     self.right_index = 0
+                    self.left_index = 0
                     self.right_timer = 0.0
+                    self.left_timer = 0.0
                     self.image = self.default_img
 
         # --- DÉCLENCHEMENT DU DASH À LA RELÂCHE DE LA COMBO ↓+Espace ---
