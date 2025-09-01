@@ -28,7 +28,7 @@ class Player:
         self.vel_y = 0
         self.on_ground = False
         self.speed = 300
-        self.jump_velocity = -420
+        self.jump_velocity = -620
         self.gravity = 1200
 
         #################################################################################################################""
@@ -69,6 +69,13 @@ class Player:
             if frame:
                 self.left_frames.append(pygame.transform.scale(frame, (w, h)))
 
+
+        self.jump_frames = []
+        for i in range(13): # 0 à 10
+            frame = load_image("sprites", "saut", f'sonic_{i}.png')
+            if frame:
+                self.jump_frames.append(pygame.transform.scale(frame, (w, h)))
+
     ############################################################################################################################################
 
         # État de l’anim
@@ -85,6 +92,10 @@ class Player:
         self.left_index = 0
         self.left_timer = 0.0
         self.left_frame_time = 0.08
+
+        self.jump_index = 0
+        self.jump_timer = 0.0
+        self.jump_frame_time = 0.06
 
         self._space_was_down = False
         self._combo_was_active = False
@@ -114,6 +125,8 @@ class Player:
             if space_pressed and self.on_ground and not down_now:
                 self.vel_y = self.jump_velocity
                 self.on_ground = False
+                self.jump_index = 0
+                self.jump_timer = 0.0
                 if self.jump_sound:
                     self.jump_sound.play()
 
@@ -175,6 +188,16 @@ class Player:
         # --- DÉCLENCHEMENT DU DASH À LA RELÂCHE DE LA COMBO ↓+Espace ---
         if self._combo_was_active and not combo_now:
             self.rect.x += 100  # avance de 50px vers la droite (ajuste si tu veux gauche/droite)
+
+        if not self.on_ground and self.jump_frames:
+            self.jump_timer += dt
+            while self.jump_timer >= self.jump_frame_time and self.jump_index < len(self.jump_frames) - 1:
+                self.jump_timer -= self.jump_frame_time
+                self.jump_index += 1
+            self.image = self.jump_frames[self.jump_index]
+        else:
+            self.jump_index = 0
+            self.jump_timer = 0.0
 
         self._space_was_down = space_now
         self._down_was_down = down_now
