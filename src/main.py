@@ -67,6 +67,9 @@ class Jeu:
             self.player.physics(dt, FLOOR_Y)
             self.rings.collect(self.player.rect)
 
+            if self.player.invincible_timer > 0:
+                self.player.invincible_timer = max(0.0, self.player.invincible_timer - dt)
+
             for enemy in self.enemies[:]:   # [:] = copie pour pouvoir remove
                 enemy.update(dt)
 
@@ -87,13 +90,13 @@ class Jeu:
                             if self.player.rect.centerx < enemy.rect.centerx:
                                 print("Sonic a touché l'ennemi PAR LA GAUCHE")
                                 self.player.rect.x -= 150
-                                self.player.invincible_timer += 4.0
+
                             else:
                                 print("Sonic a touché l'ennemi PAR LA DROITE")
                                 self.player.rect.x += 150
-                                self.player.invincible_timer += 4.0
 
                             self.player.invincible_timer = 4.0
+                            self.rings.score = 0
 
             self._draw()
         pygame.quit()
