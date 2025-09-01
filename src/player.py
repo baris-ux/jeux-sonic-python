@@ -12,7 +12,7 @@ def load_image(*parts):
         return None
 
 class Player:
-    def __init__(self, img, start_pos, w=32, h=48):
+    def __init__(self, img, start_pos, w=64, h=64):
         if img:
             img = pygame.transform.scale(img, (w, h))
         self.default_img = img
@@ -30,10 +30,16 @@ class Player:
         # --- Animation "flèche bas" (one-shot) ---
         # Charge sonic_0.png .. sonic_5.png depuis sprites/deplacement_en_bas/
         self.down_frames = []
-        for i in range(4):
+        for i in range(4): # 0 à 2
             frame = load_image("sprites", "deplacement_en_bas", f"sonic_{i}.png")
             if frame:
                 self.down_frames.append(pygame.transform.scale(frame, (w, h)))
+
+        self.right_frames = []
+        for i in range(13): # 0 à 12
+            frame = load_image("sprites", "deplacement_a_droite", f'sonic_{i}.png')
+            if frame:
+                self.right_frames.append(pygame.transform.scale(frame, (w, h)))
 
         # État de l’anim
         self.down_playing = False       # en lecture ?
@@ -42,21 +48,27 @@ class Player:
         self.down_timer = 0.0           # chrono pour avancer
         self.down_frame_time = 0.06     # durée d'une frame (secondes)
 
+        self.right_index = 0
+        self.right_timer = 0.0
+        self.right_frame_time = 0.08
+
         self._space_was_down = False
         self._combo_was_active = False
 
     def handle_input(self, dt):
         keys = pygame.key.get_pressed()
         down_now  = keys[pygame.K_DOWN]
+        right_now = keys[pygame.K_RIGHT]
+        left_now = keys[pygame.K_LEFT]
         space_now = keys[pygame.K_SPACE]
         space_pressed = space_now and not self._space_was_down  # appui instantané
         combo_now = down_now and space_now and self.on_ground and len(self.down_frames) >= 4
 
         # Déplacements horizontaux
         dx = 0
-        if keys[pygame.K_LEFT]:
+        if left_now:
             dx -= self.speed * dt
-        if keys[pygame.K_RIGHT]:
+        if right_now:
             dx += self.speed * dt
         self.rect.x += int(dx)
 
@@ -97,6 +109,20 @@ class Player:
                 self.down_index = 0
                 self.down_timer = 0.0
                 self.image = self.default_img
+
+                if self.on_ground and self.right_frames and dx > 0:
+                    self.right_timer += dt
+                    while self.right_timer >= self.right_frame_time:
+                        self.right_timer -= self.right_frame_time
+                        self.right_index += 1
+                        if self.right_index >= len(self.right_frames):
+                            self.right_index = 8
+                    self.image = self.right_frames[self.right_index]
+                else:
+                    # si on ne marche pas à droite → image par défaut
+                    self.right_index = 0
+                    self.right_timer = 0.0
+                    self.image = self.default_img
 
         # --- DÉCLENCHEMENT DU DASH À LA RELÂCHE DE LA COMBO ↓+Espace ---
         if self._combo_was_active and not combo_now:
