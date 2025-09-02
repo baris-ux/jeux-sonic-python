@@ -34,7 +34,7 @@ class Jeu:
             sonic_img = pygame.transform.scale(sonic_img, (32, 48))
         self.player = Player(sonic_img, (100, FLOOR_Y - 48))
         self.enemies = [
-            Enemy((400, FLOOR_Y - 30), w=30, h=30)
+            Enemy((400, FLOOR_Y - 50), w=50, h=50)
         ]
         
 
@@ -53,6 +53,13 @@ class Jeu:
         except Exception as e:
             self.gain_ring_sound = None
             print("Impossible de charger le son de drop rings:", e)
+
+        try:
+            self.enemy_defeated = pygame.mixer.Sound(asset("sounds","enemy_defeated.wav"))
+            self.enemy_defeated.set_volume(0.8)
+        except Exception as e:
+            self.enemy_defeated = None
+            print("Impossible de charger le enemy defeated:", e)
 
         ############################################
 
@@ -96,6 +103,7 @@ class Jeu:
                             print("Sonic a touché l'ennemi PAR LE HAUT")
                             self.enemies.remove(enemy)   # supprimer cet ennemi
                             self.player.vel_y = -400     # rebond
+                            self.enemy_defeated.play()
                         else:
                             print("Sonic a touché l'ennemi PAR LE BAS")
                     else:
