@@ -1,51 +1,55 @@
-# --- en haut du fichier ---
 import pygame
 import pytmx
-from pathlib import Path
+from pytmx.util_pygame import load_pygame
 
 class Map:
     def __init__(self, tmx_path, debug_colliders=False):
         self.debug_colliders = debug_colliders
 
-        self.tmx = pytmx.util_pygame.load_pygame(tmx_path, pixelalpha=True)
-
+        # Charger la carte
+        self.tmx = load_pygame(tmx_path, pixelalpha=True)
         tw, th = self.tmx.tilewidth, self.tmx.tileheight
-        width, height = self.tmx.width * tw, self.tmx.height * th
+        self.width  = self.tmx.width  * tw
+        self.height = self.tmx.height * th
 
-        self.surface = pygame.Surface((width, height), pygame.SRCALPHA)
+        # Surface de rendu de la carte
+        self.surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
         self._render_layers()
 
-        # --- RÉCUPÈRE LES COLLIDERS DEPUIS LE CALQUE D’OBJETS "collisions"
+        # Colliders depuis le calque d’objets "Collisions"
         self.colliders = []
-        for layer in self.tmx.layers:
-            if isinstance(layer, pytmx.TiledObjectGroup) and layer.name == "collisions":
-                for obj in layer:
-                    # on ne gère que les rectangles (width/height > 0)
-                    if getattr(obj, "visible", True) and obj.width and obj.height:
-                        rect = pygame.Rect(int(obj.x), int(obj.y), int(obj.width), int(obj.height))
-                        self.colliders.append(rect)
-
-        # --- SPAWN: accepte "spawn_player" où qu’il soit
-        self.spawn = (100, 100)
-        found_spawn = False
-        for layer in self.tmx.layers:
-            if isinstance(layer, pytmx.TiledObjectGroup):
-                for obj in layer:
-                    if obj.name == "spawn_player":
-                        self.spawn = (int(obj.x), int(obj.y))
-                        found_spawn = True
-                        break
-            if found_spawn:
-                break
+        try:
+            obj_layer = self.tmx.get_layer_by_name("Collisions")
+            for obj in obj_layer:
+                # On prend ici les rectangles (objets simples)
+                if getattr(obj, "width", 0) and getattr(obj, "height", 0):
+                    rect = pygame.Rect(int(obj.x), int(obj.y - obj.height), int(obj.width), int(obj.height))
+                    self.colliders.append(rect)
+                # (Optionnel) approx polygones -> bbox
+                elif getattr(obj, "points", None):
+                    xs = [p[0] for p in obj.points]
+                    ys = [p[1] for p in obj.points]
+                    x, y = int(obj.x + min(xs)), int(obj.y + min(ys))
+                    w, h = int(max(xs) - min(xs)), int(max(ys) - min(ys))
+                    self.colliders.append(pygame.Rect(x, y, w, h))
+        except KeyError:
+            # Pas de calque "Collisions" -> pas de crash
+            self.colliders = []
 
     def _render_layers(self):
+        """Dessine tous les calques de tuiles visibles sur self.surface."""
         tw, th = self.tmx.tilewidth, self.tmx.tileheight
         for layer in self.tmx.visible_layers:
-            if isinstance(layer, pytmx.TiledTileLayer):
-                for x, y, gid in layer:
-                    tile = self.tmx.get_tile_image_by_gid(gid)
-                    if tile:
-                        self.surface.blit(tile, (x * tw, y * th))
+            if hasattr(layer, "tiles"):
+                for x, y, data in layer.tiles():
+                    # Avec load_pygame, 'data' est déjà une Surface
+                    if isinstance(data, pygame.Surface):
+                        img = data
+                    else:
+                        img = self.tmx.get_tile_image_by_gid(data)
+
+                    if img:
+                        self.surface.blit(img, (x * tw, y * th))
 
     def draw(self, screen):
         screen.blit(self.surface, (0, 0))
@@ -57,6 +61,3 @@ class Map:
 
     def get_colliders(self):
         return self.colliders
-
-    def get_spawn(self):
-        return self.spawn

@@ -3,6 +3,7 @@ from pathlib import Path
 from player import Player
 from items import RingManager
 from enemy import Enemy
+from map import Map
 
 #BASE = Path(__file__).resolve().parent
 BASE = Path(__file__).resolve().parent.parent
@@ -29,13 +30,21 @@ class Jeu:
         if icon:
             pygame.display.set_icon(icon)
 
+        ########################
+
         sonic_img = load_image("sprites", "sonic_repos", "sonic_0.png")
         if sonic_img:
             sonic_img = pygame.transform.scale(sonic_img, (32, 48))
-        self.player = Player(sonic_img, (100, FLOOR_Y - 48))
+
+        self.player = Player(sonic_img, (100, 200))
+
+        #####################
+
         self.enemies = [
             Enemy((400, FLOOR_Y - 50), w=50, h=50)
         ]
+
+        ####################""
         
 
         # Anneaux
@@ -61,11 +70,15 @@ class Jeu:
             self.enemy_defeated = None
             print("Impossible de charger le enemy defeated:", e)
 
-        ############################################
+        ############### chargement de la map tiled ##############
+
+        self.map = Map(asset("maps", "map_1.tmx"), debug_colliders=True)
+
+        ##########################################
 
     def _draw(self):
-        self.window.fill((0, 0, 0))
-        pygame.draw.rect(self.window, (50, 50, 50), (0, FLOOR_Y, W, H - FLOOR_Y))
+        self.map.draw(self.window)
+        
         self.rings.draw(self.window)
         for enemy in self.enemies:
             enemy.draw(self.window)
@@ -82,7 +95,7 @@ class Jeu:
                 if e.type == pygame.QUIT:
                     run = False
             self.player.handle_input(dt)
-            self.player.physics(dt, FLOOR_Y)
+            self.player.physics(dt, self.map.get_colliders())
 
             collected = self.rings.collect(self.player.rect) or 0
             if collected > 0 and self.gain_ring_sound:

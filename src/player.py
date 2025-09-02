@@ -23,13 +23,13 @@ class Player:
         self.image = img
 
         self.rect = pygame.Rect(start_pos[0], start_pos[1], w, h)
+        self.pos_y = float(self.rect.y)
 
-        # physique / états
         self.vel_y = 0
         self.on_ground = False
-        self.speed = 300
-        self.jump_velocity = -620
-        self.gravity = 1200
+        self.speed = 400
+        self.jump_velocity = -850
+        self.gravity = 2000
 
         self.invincible_timer = 0.0 #si le joueur est touché on le rend invincible le temps de quelques seconde mais initalement il n'est pas invinscible
 
@@ -219,15 +219,58 @@ class Player:
         self._down_was_down = down_now
         self._combo_was_active = combo_now
 
-    def physics(self, dt, floor_y=700):
-        # Gravité + collision sol
+    def physics(self, dt, Colliders):
+        # 1) Gravité + limite de vitesse de chute
         self.vel_y += self.gravity * dt
-        self.rect.y += int(self.vel_y * dt)
+        MAX_FALL_SPEED = 1200.0
+        if self.vel_y > MAX_FALL_SPEED:
+            self.vel_y = MAX_FALL_SPEED
 
-        if self.rect.bottom >= floor_y:
-            self.rect.bottom = floor_y
-            self.vel_y = 0
+        # 2) Déplacement vertical découpé (anti-tunneling)
+        dy = self.vel_y * dt
+        STEP = 6.0  # taille d'un sous-pas (entre 4 et 8 px, c'est bien)
+        steps = max(1, int(abs(dy) // STEP))
+        step = dy / steps if steps > 0 else 0.0
+
+        self.on_ground = False
+
+        for _ in range(steps):
+            prev_bottom = self.rect.bottom
+
+            self.pos_y += step
+            self.rect.y = int(self.pos_y)
+
+            collided = False
+            for r in Colliders:
+                if self.rect.colliderect(r):
+                    if self.vel_y > 0 and prev_bottom <= r.top:
+                        # on tombait et on touche le dessus -> se poser
+                        self.rect.bottom = r.top
+                        self.pos_y = float(self.rect.y)
+                        self.vel_y = 0.0
+                        self.on_ground = True
+                        collided = True
+                        break
+                    elif self.vel_y < 0:
+                        # plafond
+                        self.rect.top = r.bottom
+                        self.pos_y = float(self.rect.y)
+                        self.vel_y = 0.0
+                        collided = True
+                        break
+
+            if collided and self.on_ground:
+                # déjà posé, inutile de continuer les sous-pas
+                break
+
+        # 3) Capteur de pieds (sécurise l'état "au sol")
+        feet = self.rect.copy()
+        feet.height = 2
+        feet.top = self.rect.bottom
+        if any(feet.colliderect(r) for r in Colliders):
             self.on_ground = True
+
+
 
     def draw(self, window):
         if self.image:
