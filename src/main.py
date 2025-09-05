@@ -41,7 +41,7 @@ class Jeu:
         #####################
 
         self.enemies = [
-            Enemy((400, FLOOR_Y - 50), w=50, h=50)
+            Enemy((400, 0), w=50, h=50)
         ]
 
         ####################""
@@ -82,6 +82,7 @@ class Jeu:
         self.rings.draw(self.window)
         for enemy in self.enemies:
             enemy.draw(self.window)
+
         self.player.draw(self.window)
         txt = self.font.render(f"Points : {self.rings.score}", True, (255, 255, 255))
         self.window.blit(txt, (10, 10))
@@ -94,9 +95,12 @@ class Jeu:
             for e in pygame.event.get():
                 if e.type == pygame.QUIT:
                     run = False
+
+            # Player d'abord
             self.player.handle_input(dt)
             self.player.physics(dt, self.map.get_colliders())
 
+            # Sons / anneaux
             collected = self.rings.collect(self.player.rect) or 0
             if collected > 0 and self.gain_ring_sound:
                 self.gain_ring_sound.play()
@@ -104,9 +108,14 @@ class Jeu:
             if self.player.invincible_timer > 0:
                 self.player.invincible_timer = max(0.0, self.player.invincible_timer - dt)
 
-            for enemy in self.enemies[:]:   # [:] = copie pour pouvoir remove
-                enemy.update(dt)
+            # 🔧 RÉCUPÈRE LES COLLIDERS UNE SEULE FOIS
+            colliders = self.map.get_colliders()
 
+            # 🔧 UPDATE DES ENNEMIS AVEC COLLIDERS (et avant le draw)
+            for enemy in self.enemies[:]:   # [:] = copie pour pouvoir remove
+                enemy.update(dt, colliders)
+
+                # collisions player <-> ennemi
                 if self.player.rect.colliderect(enemy.rect):
                     overlap = self.player.rect.clip(enemy.rect)
 
@@ -116,7 +125,8 @@ class Jeu:
                             print("Sonic a touché l'ennemi PAR LE HAUT")
                             self.enemies.remove(enemy)   # supprimer cet ennemi
                             self.player.vel_y = -400     # rebond
-                            self.enemy_defeated.play()
+                            if self.enemy_defeated:
+                                self.enemy_defeated.play()
                         else:
                             print("Sonic a touché l'ennemi PAR LE BAS")
                     else:
@@ -125,7 +135,6 @@ class Jeu:
                             if self.player.rect.centerx < enemy.rect.centerx:
                                 print("Sonic a touché l'ennemi PAR LA GAUCHE")
                                 self.player.rect.x -= 150
-
                             else:
                                 print("Sonic a touché l'ennemi PAR LA DROITE")
                                 self.player.rect.x += 150
@@ -134,10 +143,12 @@ class Jeu:
                             if self.player.drop_rings_sound and self.rings.score > 0: 
                                 self.player.drop_rings_sound.play()
 
-                            self.rings.score = 0 # importent :  On joue d'abord le son et pui on met a 0 le score sinon le son ne sera jamais joué si il perd ses anneau avant !
+                            self.rings.score = 0
 
+            # Dessin
             self._draw()
         pygame.quit()
+
 
 if __name__ == "__main__":
     Jeu().running()
