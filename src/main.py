@@ -53,7 +53,7 @@ class Jeu:
         self.font = pygame.font.Font(None, 32)
         self.clock = pygame.time.Clock()
         
-        ########################################
+        #------------- chargement des différents .wav ------------#
 
         try:
             self.gain_ring_sound = pygame.mixer.Sound(asset("sounds","gain_ring.wav"))
@@ -69,7 +69,7 @@ class Jeu:
             self.enemy_defeated = None
             print("Impossible de charger le enemy defeated:", e)
 
-        ############### chargement de la map tiled ##############
+        #------------------- chargement de la map tiled ------------------------#
 
         self.map = Map(asset("maps", "map_1.tmx"), debug_colliders=True)
 
@@ -142,10 +142,8 @@ class Jeu:
 
                             self.rings.score = 0
 
-            # ✅ ANNEAUX : gravité + collisions AVANT la collecte
             self.rings.update(dt, colliders)
 
-            # ✅ Collecte APRÈS la mise à jour
             collected = self.rings.collect(self.player.rect) or 0
             if collected > 0 and self.gain_ring_sound:
                 self.gain_ring_sound.play()

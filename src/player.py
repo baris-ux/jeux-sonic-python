@@ -137,12 +137,14 @@ class Player:
         if combo_now:
             self.image = self.down_frames[3]  # sonic_3.png
         else:
-            # Saut : seulement à l'appui, et seulement si ↓ n'est pas tenue
+            # ------- si on appuie sur espace, qu'on n'est pas au sol et qu'on appuie pas sur la flèche du bas on peut sauter -----------
             if space_pressed and self.on_ground and not down_now:
                 self.vel_y = self.jump_velocity
                 self.on_ground = False
                 self.jump_index = 0
                 self.jump_timer = 0.0
+
+                # --------- Sécurité: ne joue le son que si l’audio est chargé ------ #
                 if self.jump_sound:
                     self.jump_sound.play()
 
