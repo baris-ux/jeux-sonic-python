@@ -1,31 +1,26 @@
 import pygame
-import pytmx
+import pytmx # lit les fichiers pytmx 
 from pytmx.util_pygame import load_pygame
 
 class Map:
     def __init__(self, tmx_path, debug_colliders=False):
         self.debug_colliders = debug_colliders
 
-        # Charger la carte
         self.tmx = load_pygame(tmx_path, pixelalpha=True)
-        tw, th = self.tmx.tilewidth, self.tmx.tileheight
-        self.width  = self.tmx.width  * tw
-        self.height = self.tmx.height * th
+        tw, th = self.tmx.tilewidth, self.tmx.tileheight # On récupère la largeur et la hauteur d'une tuile
+        self.width  = self.tmx.width  * tw # la largeur de la map en pixel = largeur du fichier tmx * largeur d'une tuile 
+        self.height = self.tmx.height * th # la hauteur de la map en pixel = hauteur du fichier tmx * la hautueur d'une tuile
 
-        # Surface de rendu de la carte
         self.surface = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
         self._render_layers()
 
-        # Colliders depuis le calque d’objets "Collisions"
         self.colliders = []
         try:
             obj_layer = self.tmx.get_layer_by_name("Collisions")
             for obj in obj_layer:
-                # On prend ici les rectangles (objets simples)
                 if getattr(obj, "width", 0) and getattr(obj, "height", 0):
                     rect = pygame.Rect(int(obj.x), int(obj.y - obj.height), int(obj.width), int(obj.height))
                     self.colliders.append(rect)
-                # (Optionnel) approx polygones -> bbox
                 elif getattr(obj, "points", None):
                     xs = [p[0] for p in obj.points]
                     ys = [p[1] for p in obj.points]
@@ -33,11 +28,9 @@ class Map:
                     w, h = int(max(xs) - min(xs)), int(max(ys) - min(ys))
                     self.colliders.append(pygame.Rect(x, y, w, h))
         except KeyError:
-            # Pas de calque "Collisions" -> pas de crash
             self.colliders = []
 
     def _render_layers(self):
-        """Dessine tous les calques de tuiles visibles sur self.surface."""
         tw, th = self.tmx.tilewidth, self.tmx.tileheight
         for layer in self.tmx.visible_layers:
             if hasattr(layer, "tiles"):

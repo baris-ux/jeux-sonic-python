@@ -5,7 +5,6 @@ from items import RingManager
 from enemy import Enemy
 from map import Map
 
-#BASE = Path(__file__).resolve().parent
 BASE = Path(__file__).resolve().parent.parent
 def asset(*p): return str(BASE.joinpath(*p))
 
