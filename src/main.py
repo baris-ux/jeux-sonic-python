@@ -49,7 +49,7 @@ class Jeu:
 
         # Anneaux
         ring_img = load_image("anneau.png")
-        self.rings = RingManager(ring_img, FLOOR_Y)
+        self.rings = RingManager(ring_img)
 
         self.font = pygame.font.Font(None, 32)
         self.clock = pygame.time.Clock()
@@ -98,20 +98,18 @@ class Jeu:
 
             # Player d'abord
             self.player.handle_input(dt)
-            self.player.physics(dt, self.map.get_colliders())
 
-            # Sons / anneaux
-            collected = self.rings.collect(self.player.rect) or 0
-            if collected > 0 and self.gain_ring_sound:
-                self.gain_ring_sound.play()
+            # Un seul get_colliders par frame
+            colliders = self.map.get_colliders()
 
+            # Physique du joueur avec collisions
+            self.player.physics(dt, colliders)
+
+            # Timer d'invincibilité
             if self.player.invincible_timer > 0:
                 self.player.invincible_timer = max(0.0, self.player.invincible_timer - dt)
 
-            # 🔧 RÉCUPÈRE LES COLLIDERS UNE SEULE FOIS
-            colliders = self.map.get_colliders()
-
-            # 🔧 UPDATE DES ENNEMIS AVEC COLLIDERS (et avant le draw)
+            # ✅ ENNEMIS : update + collisions avec le joueur (DANS la boucle)
             for enemy in self.enemies[:]:   # [:] = copie pour pouvoir remove
                 enemy.update(dt, colliders)
 
@@ -144,6 +142,14 @@ class Jeu:
                                 self.player.drop_rings_sound.play()
 
                             self.rings.score = 0
+
+            # ✅ ANNEAUX : gravité + collisions AVANT la collecte
+            self.rings.update(dt, colliders)
+
+            # ✅ Collecte APRÈS la mise à jour
+            collected = self.rings.collect(self.player.rect) or 0
+            if collected > 0 and self.gain_ring_sound:
+                self.gain_ring_sound.play()
 
             # Dessin
             self._draw()
