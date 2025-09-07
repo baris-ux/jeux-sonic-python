@@ -115,7 +115,6 @@ class Jeu:
             if self.player.invincible_timer > 0:
                 self.player.invincible_timer = max(0.0, self.player.invincible_timer - dt)
 
-            # ✅ ENNEMIS : update + collisions avec le joueur (DANS la boucle)
             for enemy in self.enemies[:]:   # [:] = copie pour pouvoir remove
                 enemy.update(dt, colliders)
 
