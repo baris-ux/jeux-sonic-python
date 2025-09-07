@@ -24,9 +24,9 @@ class RingManager:
                 collected += 1
         return collected
 
-    def draw(self, window):
+    def draw(self, window, camera=None):
         for ring in self.rings:
-            ring.draw(window)
+            ring.draw(window, camera)
 
 
 class Ring:
@@ -38,11 +38,13 @@ class Ring:
         self.on_ground = False
         self.img = pygame.transform.smoothscale(img, (self.rect.w, self.rect.h)) if img else None
 
-    def draw(self, window):
+    def draw(self, window, camera=None):
+        draw_rect = self.rect if camera is None else camera.apply(self.rect)
+
         if self.img:
-            window.blit(self.img, self.rect)
+            window.blit(self.img, draw_rect)
         else:
-            pygame.draw.ellipse(window, (255, 215, 0), self.rect, 3)
+            pygame.draw.ellipse(window, (255, 215, 0), draw_rect, 3)
 
     def update(self, dt, colliders):
         self.vel_y += self.gravity * dt

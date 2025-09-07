@@ -65,6 +65,7 @@ class Enemy:
             if collided and self.on_ground:
                 break
 
-    def draw(self, window):
+    def draw(self, window, camera=None):
         img = self.image_right if self.direction == 1 else self.image_left
-        window.blit(img, self.rect)
+        draw_rect = self.rect if camera is None else camera.apply(self.rect)
+        window.blit(img, draw_rect)

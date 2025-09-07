@@ -44,13 +44,24 @@ class Map:
                     if img:
                         self.surface.blit(img, (x * tw, y * th))
 
-    def draw(self, screen):
-        screen.blit(self.surface, (0, 0))
+    def draw(self, screen, camera=None):
+        if camera:
+            # décalage inverse pour afficher la portion visible
+            screen.blit(self.surface, (-camera.offset_x, -camera.offset_y))
+        else:
+            screen.blit(self.surface, (0, 0))
+
         if self.debug_colliders:
             for r in self.colliders:
                 s = pygame.Surface((r.width, r.height), pygame.SRCALPHA)
-                s.fill((255, 0, 0, 80))  # rouge semi-transparent
-                screen.blit(s, (r.x, r.y))
+                s.fill((255, 0, 0, 80))
+                if camera:
+                    # appliquer la caméra au rect
+                    sr = camera.apply(r)
+                    screen.blit(s, (sr.x, sr.y))
+                else:
+                    screen.blit(s, (r.x, r.y))
+
 
     def get_colliders(self):
         return self.colliders

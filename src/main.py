@@ -4,6 +4,7 @@ from player import Player
 from items import RingManager
 from enemy import Enemy
 from map import Map
+from camera import Camera
 
 BASE = Path(__file__).resolve().parent.parent
 def asset(*p): return str(BASE.joinpath(*p))
@@ -28,6 +29,8 @@ class Jeu:
         icon = load_image("icone_sonic.png")
         if icon:
             pygame.display.set_icon(icon)
+        
+        self.camera = Camera(W, H)
 
         ########################
 
@@ -76,15 +79,19 @@ class Jeu:
         ##########################################
 
     def _draw(self):
-        self.map.draw(self.window)
-        
-        self.rings.draw(self.window)
-        for enemy in self.enemies:
-            enemy.draw(self.window)
+        self.window.fill((0, 0, 0))
 
-        self.player.draw(self.window)
+        self.map.draw(self.window, self.camera)
+        self.rings.draw(self.window, self.camera)
+
+        for enemy in self.enemies:
+            enemy.draw(self.window, self.camera)
+
+        self.player.draw(self.window, self.camera)
+        
         txt = self.font.render(f"Points : {self.rings.score}", True, (255, 255, 255))
         self.window.blit(txt, (10, 10))
+
         pygame.display.flip()
 
     def running(self):
@@ -98,11 +105,11 @@ class Jeu:
             # Player d'abord
             self.player.handle_input(dt)
 
-            # Un seul get_colliders par frame
             colliders = self.map.get_colliders()
 
-            # Physique du joueur avec collisions
             self.player.physics(dt, colliders)
+
+            self.camera.update(self.player)
 
             # Timer d'invincibilité
             if self.player.invincible_timer > 0:

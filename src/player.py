@@ -133,7 +133,6 @@ class Player:
             dx += self.speed * dt
         self.rect.x += int(dx)
 
-        # --- Cas spécial ↓ + Espace : montrer sonic_3.png (sans saut, sans anim) ---
         if combo_now:
             self.image = self.down_frames[3]  # sonic_3.png
         else:
@@ -274,13 +273,11 @@ class Player:
 
 
 
-    def draw(self, window):
+    def draw(self, window, camera=None):
         if self.image:
-            if self.invincible_timer > 0 :
-                self.image.set_alpha(120)
-            else :
-                self.image.set_alpha(255)
-            
-            window.blit(self.image, self.rect)
+            self.image.set_alpha(120 if self.invincible_timer > 0 else 255)
+            draw_rect = self.rect if camera is None else camera.apply(self.rect)
+            window.blit(self.image, draw_rect)  # <-- utiliser draw_rect
         else:
-            pygame.draw.rect(window, (0, 120, 255), self.rect, border_radius=6)
+            draw_rect = self.rect if camera is None else camera.apply(self.rect)
+            pygame.draw.rect(window, (0, 120, 255), draw_rect, border_radius=6)
