@@ -24,6 +24,8 @@ class Player:
 
         self.rect = pygame.Rect(start_pos[0], start_pos[1], w, h)
         self.pos_y = float(self.rect.y)
+        self.pos_x = float(self.rect.x)
+        self.dx = 0.0
 
         self.vel_y = 0
         self.on_ground = False
@@ -127,11 +129,11 @@ class Player:
 
         # Déplacements horizontaux
         dx = 0
-        if left_now:
-            dx -= self.speed * dt
-        if right_now:
-            dx += self.speed * dt
-        self.rect.x += int(dx)
+        if left_now: # si on va à gacuhe 
+            dx -= self.speed * dt 
+        if right_now: # si on va à droite 
+            dx += self.speed * dt 
+        self.dx = dx
 
         if combo_now:
             self.image = self.down_frames[3]  # sonic_3.png
@@ -220,7 +222,24 @@ class Player:
         self._down_was_down = down_now
         self._combo_was_active = combo_now
 
+
+
     def physics(self, dt, Colliders):
+        dx = self.dx
+        self.dx = 0.0
+        self.pos_x += dx
+        self.rect.x = int(self.pos_x)
+
+        for r in Colliders:
+            if self.rect.colliderect(r):
+                if dx > 0:  
+                    self.rect.right = r.left
+                elif dx < 0: 
+                    self.rect.left = r.right
+                    self.image = self.left_frames[0]
+                    
+                self.pos_x = float(self.rect.x)
+
         # 1) Gravité + limite de vitesse de chute
         self.vel_y += self.gravity * dt
         MAX_FALL_SPEED = 1200.0
