@@ -18,17 +18,35 @@ class Map:
         try:
             obj_layer = self.tmx.get_layer_by_name("Collisions")
             for obj in obj_layer:
-                if getattr(obj, "width", 0) and getattr(obj, "height", 0):
-                    rect = pygame.Rect(int(obj.x), int(obj.y - obj.height), int(obj.width), int(obj.height))
-                    self.colliders.append(rect)
+                # --- 1) TILE OBJECT (tuile posée comme objet) ---
+                # pytmx donne un gid quand c'est un "tile object"
+                if getattr(obj, "gid", 0):
+                    x = int(obj.x)
+                    y = int(obj.y - obj.height)   # remettre l'origine en haut-gauche
+                    w = int(obj.width)
+                    h = int(obj.height)
+                    self.colliders.append(pygame.Rect(x, y, w, h))
+
+                # --- 2) RECTANGLE dessiné dans Tiled ---
+                elif getattr(obj, "width", 0) and getattr(obj, "height", 0):
+                    x = int(obj.x)
+                    y = int(obj.y)                # <-- pas de -height ici
+                    w = int(obj.width)
+                    h = int(obj.height)
+                    self.colliders.append(pygame.Rect(x, y, w, h))
+
+                # --- 3) POLYGONE / POLYLINE ---
                 elif getattr(obj, "points", None):
                     xs = [p[0] for p in obj.points]
                     ys = [p[1] for p in obj.points]
-                    x, y = int(obj.x + min(xs)), int(obj.y + min(ys))
-                    w, h = int(max(xs) - min(xs)), int(max(ys) - min(ys))
+                    x = int(obj.x + min(xs))
+                    y = int(obj.y + min(ys))      # points relatifs -> pas de -h
+                    w = int(max(xs) - min(xs))
+                    h = int(max(ys) - min(ys))
                     self.colliders.append(pygame.Rect(x, y, w, h))
         except KeyError:
             self.colliders = []
+
 
     def _render_layers(self):
         tw, th = self.tmx.tilewidth, self.tmx.tileheight
