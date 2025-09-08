@@ -54,7 +54,6 @@ class Map:
         if self.debug_colliders:
             for r in self.colliders:
                 s = pygame.Surface((r.width, r.height), pygame.SRCALPHA)
-                s.fill((255, 0, 0, 80))
                 if camera:
                     # appliquer la caméra au rect
                     sr = camera.apply(r)
