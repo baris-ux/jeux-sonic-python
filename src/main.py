@@ -131,7 +131,7 @@ class Jeu:
 
                     if overlap.width > overlap.height:
                         # collision verticale
-                        if self.player.rect.centery < enemy.rect.centery:
+                        if self.player.rect.centery < enemy.rect.centeryd:
                             print("Sonic a touché l'ennemi PAR LE HAUT")
                             self.enemies.remove(enemy)   # supprimer cet ennemi
                             self.player.vel_y = -400     # rebond
@@ -141,19 +141,25 @@ class Jeu:
                             print("Sonic a touché l'ennemi PAR LE BAS")
                     else:
                         # collision horizontale
-                        if self.player.invincible_timer <= 0: 
-                            if self.player.rect.centerx < enemy.rect.centerx:
-                                print("Sonic a touché l'ennemi PAR LA GAUCHE")
-                                self.player.rect.x -= 150
-                            else:
-                                print("Sonic a touché l'ennemi PAR LA DROITE")
-                                self.player.rect.x += 150
+                        if self.player.dash_remaining == 0:
+                            if self.player.invincible_timer <= 0: # si le joueur n'est pas ou plus invincible
+                                if self.player.rect.centerx < enemy.rect.centerx:
+                                    print("Sonic a touché l'ennemi PAR LA GAUCHE")
+                                    self.player.rect.x -= 150
+                                elif self.player.rect.centerx > enemy.rect.centerx:
+                                    print("Sonic a touché l'ennemi PAR LA DROITE")
+                                    self.player.rect.x += 150
 
-                            self.player.invincible_timer = 4.0
-                            if self.player.drop_rings_sound and self.rings.score > 0: 
-                                self.player.drop_rings_sound.play()
+                                self.player.invincible_timer = 4.0
+                                if self.player.drop_rings_sound and self.rings.score > 0: 
+                                    self.player.drop_rings_sound.play()
 
-                            self.rings.score = 0
+                                self.rings.score = 0
+                        
+                        else: 
+                            self.enemies.remove(enemy)
+                            if self.enemy_defeated:
+                                self.enemy_defeated.play()
 
             self.rings.update(dt, colliders)
 
