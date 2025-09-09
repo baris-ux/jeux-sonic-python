@@ -62,6 +62,9 @@ class Map:
                     if img:
                         self.surface.blit(img, (x * tw, y * th))
 
+    def get_pixel_size(self):
+        return self.width, self.height
+
     def draw(self, screen, camera=None):
         if camera:
             # décalage inverse pour afficher la portion visible

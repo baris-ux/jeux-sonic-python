@@ -259,7 +259,6 @@ class Player:
                 elif dx < 0: 
                     self.rect.left = r.right
                     self.facing = 1
-                    #self.image = self.left_frames[0]
                     
                 self.pos_x = float(self.rect.x)
 

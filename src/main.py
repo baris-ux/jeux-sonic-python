@@ -80,6 +80,9 @@ class Jeu:
 
         self.map = Map(asset("maps", "map_1.tmx"), debug_colliders=True)
 
+        world_w, world_h = self.map.get_pixel_size()
+        self.camera.world_size(world_w, world_h)
+
         ##########################################
 
     def _draw(self):
