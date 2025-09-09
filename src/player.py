@@ -37,6 +37,8 @@ class Player:
 
         self.facing = 1 # si 1 alors le joueur regarde à droite si -1 joueur regarde à gauche
 
+        self.dash_remaining = 0.0 # temps de dash restant
+
         #################################################################################################################""
 
         try: 
@@ -145,10 +147,18 @@ class Player:
         if right_now: # si on va à droite 
             dx += self.speed * dt 
             self.facing = 1
+
+        if self.dash_remaining != 0.0:
+            speed = 400.0  
+            dir_ = 1 if self.dash_remaining > 0 else -1
+            step = min(speed * dt, abs(self.dash_remaining))
+            dx += dir_ * step
+            self.dash_remaining -= dir_ * step
+        
         self.dx = dx
 
-        if combo_now:
-            self.image = self.down_frames[3] 
+        if self.dash_remaining != 0.0 and self.on_ground and self.down_frames:
+            self.image = self.down_frames[3]
         else:
             # ------- si on appuie sur espace, qu'on n'est pas au sol et qu'on appuie pas sur la flèche du bas on peut sauter -----------
             if space_pressed and self.on_ground and not down_now:
@@ -225,9 +235,9 @@ class Player:
                     self.right_timer = 0.0
                     self.left_timer = 0.0
 
-        # --- DÉCLENCHEMENT DU DASH À LA RELÂCHE DE LA COMBO ↓+Espace ---
+        # --- déclenchement du dash quand on relache flèche du bas + Espace ---
         if self._combo_was_active and not combo_now:
-            self.dx += 100 * self.facing
+            self.dash_remaining += 1100 * self.facing
 
         if not self.on_ground and self.jump_frames:
             self.jump_timer += dt
