@@ -16,11 +16,11 @@ pygame.init()
 pygame.mixer.init()
 
 class Player:
-    def __init__(self, img, start_pos, w=96, h=96):
-        if img:
-            img = pygame.transform.scale(img, (w, h))
-        self.default_img = img
-        self.image = img
+    def __init__(self, idle_right, idle_left, start_pos, w=96, h=96):
+        self.idle_right = pygame.transform.scale(idle_right, (w, h)) if idle_right else None
+        self.idle_left  = pygame.transform.scale(idle_left,  (w, h)) if idle_left  else None
+
+        self.image = self.idle_right or self.idle_left
 
         self.rect = pygame.Rect(start_pos[0], start_pos[1], w, h)
         self.pos_y = float(self.rect.y)
@@ -35,6 +35,7 @@ class Player:
 
         self.invincible_timer = 0.0 #si le joueur est touché on le rend invincible le temps de quelques seconde mais initalement il n'est pas invinscible
 
+        self.facing = 1 # si 1 alors le joueur regarde à droite si -1 joueur regarde à gauche
 
         #################################################################################################################""
 
@@ -94,6 +95,15 @@ class Player:
             if frame:
                 self.jump_frames.append(pygame.transform.scale(frame, (w, h)))
 
+
+        self.idle_right = load_image("sprites", "sonic_repos_droite", "sonic_0.png")
+        if self.idle_right:
+            self.idle_right = pygame.transform.scale(self.idle_right, (w, h))
+
+        self.idle_left = load_image("sprites", "sonic_repos_gauche", "sonic_0.png")
+        if self.idle_left:
+            self.idle_left = pygame.transform.scale(self.idle_left, (w, h))
+
     ############################################################################################################################################
 
         # État de l’anim
@@ -131,8 +141,10 @@ class Player:
         dx = 0
         if left_now: # si on va à gacuhe 
             dx -= self.speed * dt 
+            self.facing = -1
         if right_now: # si on va à droite 
             dx += self.speed * dt 
+            self.facing = 1
         self.dx = dx
 
         if combo_now:
@@ -176,7 +188,17 @@ class Player:
                 self.down_can_restart = True
                 self.down_index = 0
                 self.down_timer = 0.0
-                self.image = self.default_img
+                
+                if self.on_ground:
+                    if self.facing == 1 and self.idle_right:
+                        self.image = self.idle_right
+                    elif self.facing == -1 and self.idle_left:
+                        self.image = self.idle_left
+                    else:
+                        idle = self.default_img
+                        if self.facing == -1 and idle is not None:
+                            idle = pygame.transform.flip(idle, True, False)
+                        self.image = idle
 
                 if self.on_ground and self.right_frames and dx > 0:
                     self.right_timer += dt
@@ -202,7 +224,6 @@ class Player:
                     self.left_index = 0
                     self.right_timer = 0.0
                     self.left_timer = 0.0
-                    self.image = self.default_img
 
         # --- DÉCLENCHEMENT DU DASH À LA RELÂCHE DE LA COMBO ↓+Espace ---
         if self._combo_was_active and not combo_now:
@@ -234,9 +255,11 @@ class Player:
             if self.rect.colliderect(r):
                 if dx > 0:  
                     self.rect.right = r.left
+                    self.facing = -1
                 elif dx < 0: 
                     self.rect.left = r.right
-                    self.image = self.left_frames[0]
+                    self.facing = 1
+                    #self.image = self.left_frames[0]
                     
                 self.pos_x = float(self.rect.x)
 

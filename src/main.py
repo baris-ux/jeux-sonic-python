@@ -34,11 +34,15 @@ class Jeu:
 
         ########################
 
-        sonic_img = load_image("sprites", "sonic_repos", "sonic_0.png")
-        if sonic_img:
-            sonic_img = pygame.transform.scale(sonic_img, (32, 48))
 
-        self.player = Player(sonic_img, (100, 200))
+        idle_right = load_image("sprites", "sonic_repos_droite", "sonic_0.png")
+        idle_left  = load_image("sprites", "sonic_repos_gauche", "sonic_0.png")
+
+        if idle_right: idle_right = pygame.transform.scale(idle_right, (32, 48))
+        if idle_left:  idle_left  = pygame.transform.scale(idle_left, (32, 48))
+
+        self.player = Player(idle_right, idle_left, (100, 200))
+
 
         #####################
 
@@ -56,7 +60,7 @@ class Jeu:
         self.font = pygame.font.Font(None, 32)
         self.clock = pygame.time.Clock()
         
-        #------------- chargement des différents .wav ------------#
+        #--------------------- chargement des différents .wav -----------------------#
 
         try:
             self.gain_ring_sound = pygame.mixer.Sound(asset("sounds","gain_ring.wav"))
