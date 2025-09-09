@@ -148,7 +148,7 @@ class Player:
         self.dx = dx
 
         if combo_now:
-            self.image = self.down_frames[3]  # sonic_3.png
+            self.image = self.down_frames[3] 
         else:
             # ------- si on appuie sur espace, qu'on n'est pas au sol et qu'on appuie pas sur la flèche du bas on peut sauter -----------
             if space_pressed and self.on_ground and not down_now:
@@ -227,7 +227,7 @@ class Player:
 
         # --- DÉCLENCHEMENT DU DASH À LA RELÂCHE DE LA COMBO ↓+Espace ---
         if self._combo_was_active and not combo_now:
-            self.rect.x += 100  # avance de 50px vers la droite (ajuste si tu veux gauche/droite)
+            self.dx += 100 * self.facing
 
         if not self.on_ground and self.jump_frames:
             self.jump_timer += dt

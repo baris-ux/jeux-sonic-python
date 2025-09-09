@@ -18,7 +18,6 @@ class Map:
         try:
             obj_layer = self.tmx.get_layer_by_name("Collisions")
             for obj in obj_layer:
-                # --- 1) TILE OBJECT (tuile posée comme objet) ---
                 # pytmx donne un gid quand c'est un "tile object"
                 if getattr(obj, "gid", 0):
                     x = int(obj.x)
