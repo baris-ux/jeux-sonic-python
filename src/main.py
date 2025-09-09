@@ -131,7 +131,7 @@ class Jeu:
 
                     if overlap.width > overlap.height:
                         # collision verticale
-                        if self.player.rect.centery < enemy.rect.centeryd:
+                        if self.player.rect.centery < enemy.rect.centery:
                             print("Sonic a touché l'ennemi PAR LE HAUT")
                             self.enemies.remove(enemy)   # supprimer cet ennemi
                             self.player.vel_y = -400     # rebond

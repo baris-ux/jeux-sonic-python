@@ -270,7 +270,9 @@ class Player:
                     self.rect.left = r.right
                     self.facing = 1
                     
+                    
                 self.pos_x = float(self.rect.x)
+                self.dash_remaining = 0.0
 
         # 1) Gravité + limite de vitesse de chute
         self.vel_y += self.gravity * dt
