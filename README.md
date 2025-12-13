@@ -18,4 +18,4 @@
 - **pygame** pour la partie graphique
 - **pytmx** pour les maps Tiled (.tmx)
 
-<img width="2282" height="1839" alt="image" src="https://github.com/user-attachments/assets/655cb50c-dd92-4145-b858-fefac5112e43" />
+<img width="700" height="800" alt="image" src="https://github.com/user-attachments/assets/655cb50c-dd92-4145-b858-fefac5112e43" />
