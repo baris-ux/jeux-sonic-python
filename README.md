@@ -17,3 +17,5 @@
 - **pip** pour gérer les dépendances
 - **pygame** pour la partie graphique
 - **pytmx** pour les maps Tiled (.tmx)
+
+<img width="2282" height="1839" alt="image" src="https://github.com/user-attachments/assets/655cb50c-dd92-4145-b858-fefac5112e43" />
