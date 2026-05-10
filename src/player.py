@@ -189,8 +189,8 @@ class Player:
 
         # --- DÉCLENCHEMENT DU DASH À LA RELÂCHE DE LA COMBO ↓+Espace ---
         if self._combo_was_active and not combo_now:
-            self.rect.x += 100  # avance de 50px vers la droite (ajuste si tu veux gauche/droite)
-
+            self.rect.x += 150 if self.facing_right else -150
+            
         self._space_was_down = space_now
         self._down_was_down = down_now
         self._combo_was_active = combo_now

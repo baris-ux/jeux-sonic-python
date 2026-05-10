@@ -18,21 +18,18 @@ class menu:
                 print('ok')
         
 
+    # ✅ Corrigé — intègre ça dans lancement_menu()
     def lancement_menu(self):
-        
         self.run = True
-
         while self.run:
-
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.run = False
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if self.bouton.collidepoint(event.pos):
+                        Jeu().running()  # lance le jeu !
 
-            self.menu.fill((76, 65, 75))
-            self.menu.blit(self.image_commencer, (200, 400))
-            pygame.display.flip()
-
-        
+            
 if __name__ == '__main__':
     pygame.init()
     menu().lancement_menu()
