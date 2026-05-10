@@ -28,7 +28,7 @@ class Player:
         self.vel_y = 0
         self.on_ground = False
         self.speed = 220
-        self.jump_velocity = -420
+        self.jump_velocity = -550
         self.gravity = 1200
 
         self._is_running_sound = False
@@ -90,6 +90,7 @@ class Player:
 
         self._space_was_down = False
         self._combo_was_active = False
+        self.facing_right = True 
 
     def handle_input(self, dt):
         keys = pygame.key.get_pressed()
@@ -107,6 +108,11 @@ class Player:
         if right_now:
             dx += self.speed * dt
         self.rect.x += int(dx)
+
+        if dx > 0:
+            self.facing_right = True
+        elif dx < 0:
+            self.facing_right = False
 
         # --- Cas spécial ↓ + Espace : montrer sonic_3.png (sans saut, sans anim) ---
         if combo_now:
@@ -173,7 +179,11 @@ class Player:
                     self.left_index = 0
                     self.right_timer = 0.0
                     self.left_timer = 0.0
-                    self.image = self.default_img
+
+                    if self.facing_right:
+                        self.image = self.default_img
+                    else:
+                        self.image = pygame.transform.flip(self.default_img, True, False)
 
                 is_running_now = (self.on_ground and abs(dx) > 0 and not down_now and not combo_now)
 

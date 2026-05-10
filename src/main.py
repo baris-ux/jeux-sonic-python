@@ -30,8 +30,6 @@ class Jeu:
 
         # Sprite Sonic (repos)
         sonic_img = load_image("sprites", "sonic_repos", "sonic_0.png")
-        if sonic_img:
-            sonic_img = pygame.transform.scale(sonic_img, (32, 48))
         self.player = Player(sonic_img, (100, FLOOR_Y - 48))
 
         # Anneaux
