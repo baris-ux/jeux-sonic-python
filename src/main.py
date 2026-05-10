@@ -1,9 +1,9 @@
 import pygame
+import pytmx
 from pathlib import Path
 from player import Player
 from items import RingManager
 
-#BASE = Path(__file__).resolve().parent
 BASE = Path(__file__).resolve().parent.parent
 def asset(*p): return str(BASE.joinpath(*p))
 
@@ -23,25 +23,44 @@ class Jeu:
         self.window = pygame.display.set_mode((W, H))
         pygame.display.set_caption("Sonic simple")
 
-        # Icône (facultatif)
         icon = load_image("icone_sonic.png")
         if icon:
             pygame.display.set_icon(icon)
 
-        # Sprite Sonic (repos)
+        # Chargement de la map TMX
+        self.tmx_data = pytmx.load_pygame(asset("maps", "map_sonic"), pixelalpha=True)
+        print(self.tmx_data.tilewidth, self.tmx_data.tileheight)  # ← ici
+        print(self.tmx_data.width, self.tmx_data.height)  
+        self.collision_rects = self._load_collisions()
+
         sonic_img = load_image("sprites", "sonic_repos", "sonic_0.png")
         self.player = Player(sonic_img, (100, FLOOR_Y - 48))
 
-        # Anneaux
         ring_img = load_image("anneau.png")
         self.rings = RingManager(ring_img, FLOOR_Y)
 
         self.font = pygame.font.Font(None, 32)
         self.clock = pygame.time.Clock()
 
+    def _load_collisions(self):
+        """Récupère les rectangles de collision depuis le calque objet Tiled."""
+        rects = []
+        for layer in self.tmx_data.objectgroups:
+            for obj in layer:
+                rects.append(pygame.Rect(obj.x, obj.y, obj.width, obj.height))
+        return rects
+
+    def _draw_map(self):
+        offset_y = -75  # ajuste cette valeur jusqu'à ce que ce soit bon
+        for layer in self.tmx_data.visible_layers:
+            if isinstance(layer, pytmx.TiledTileLayer):
+                for x, y, surf in layer.tiles():
+                    self.window.blit(surf, (x * self.tmx_data.tilewidth,
+                                        y * self.tmx_data.tileheight + offset_y))
+
     def _draw(self):
         self.window.fill((0, 0, 0))
-        pygame.draw.rect(self.window, (50, 50, 50), (0, FLOOR_Y, W, H - FLOOR_Y))
+        self._draw_map()
         self.rings.draw(self.window)
         self.player.draw(self.window)
         txt = self.font.render(f"Points : {self.rings.score}", True, (255, 255, 255))
@@ -56,7 +75,7 @@ class Jeu:
                 if e.type == pygame.QUIT:
                     run = False
             self.player.handle_input(dt)
-            self.player.physics(dt, FLOOR_Y)
+            self.player.physics(dt, FLOOR_Y, self.collision_rects)
             self.rings.collect(self.player.rect)
             self._draw()
         pygame.quit()

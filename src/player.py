@@ -205,15 +205,30 @@ class Player:
         self._down_was_down = down_now
         self._combo_was_active = combo_now
 
-    def physics(self, dt, floor_y=700):
-        # Gravité + collision sol
+    def physics(self, dt, floor_y=700, collision_rects=None):
+        # Gravité
         self.vel_y += self.gravity * dt
         self.rect.y += int(self.vel_y * dt)
 
+        self.on_ground = False
+
+        # Collision sol de base
         if self.rect.bottom >= floor_y:
             self.rect.bottom = floor_y
             self.vel_y = 0
             self.on_ground = True
+
+        # Collisions avec les objets Tiled
+        if collision_rects:
+            for rect in collision_rects:
+                if self.rect.colliderect(rect):
+                    if self.vel_y > 0 and self.rect.bottom - int(self.vel_y * dt) <= rect.top + 10:
+                        self.rect.bottom = rect.top
+                        self.vel_y = 0
+                        self.on_ground = True
+                    elif self.vel_y < 0:
+                        self.rect.top = rect.bottom
+                        self.vel_y = 0
 
     def draw(self, window):
         if self.image:
