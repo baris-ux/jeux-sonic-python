@@ -17,9 +17,10 @@ class RingManager:
                 self.rings.remove(r)
                 self.score += 1
 
-    def draw(self, window):
+    def draw(self, window, cam_x=0, cam_y=0):
         for r in self.rings:
+            draw_rect = r.move(-cam_x, -cam_y)
             if self.ring_img:
-                window.blit(self.ring_img, r)
+                window.blit(self.ring_img, draw_rect)
             else:
-                pygame.draw.ellipse(window, (255, 215, 0), r, 3)
+                pygame.draw.ellipse(window, (255, 215, 0), draw_rect, 3)

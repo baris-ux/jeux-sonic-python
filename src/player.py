@@ -10,7 +10,7 @@ def load_image(*parts):
         return pygame.image.load(asset(*parts)).convert_alpha()
     except Exception:
         return None
-    
+
 pygame.mixer.pre_init(44100, -16, 2, 256)
 pygame.init()
 pygame.mixer.init()
@@ -24,7 +24,6 @@ class Player:
 
         self.rect = pygame.Rect(start_pos[0], start_pos[1], w, h)
 
-        # physique / états
         self.vel_y = 0
         self.on_ground = False
         self.speed = 220
@@ -33,9 +32,7 @@ class Player:
 
         self._is_running_sound = False
 
-        #################################################################################################################""
-
-        try: 
+        try:
             self.jump_sound = pygame.mixer.Sound(asset("sounds", "jump.wav"))
             self.jump_sound.set_volume(0.8)
         except Exception as e:
@@ -49,36 +46,29 @@ class Player:
             self.run_sound = None
             print("Impossible de charger le son de course:", e)
 
-
-        ################################################################################################################
-
         self.down_frames = []
-        for i in range(4): # 0 à 2
+        for i in range(4):
             frame = load_image("sprites", "deplacement_en_bas", f"sonic_{i}.png")
             if frame:
                 self.down_frames.append(pygame.transform.scale(frame, (w, h)))
 
         self.right_frames = []
-        for i in range(13): # 0 à 12
+        for i in range(13):
             frame = load_image("sprites", "deplacement_a_droite", f'sonic_{i}.png')
             if frame:
                 self.right_frames.append(pygame.transform.scale(frame, (w, h)))
 
-        
         self.left_frames = []
-        for i in range(13): # 0 à 12
+        for i in range(13):
             frame = load_image("sprites", "deplacement_a_gauche", f'sonic_{i}.png')
             if frame:
                 self.left_frames.append(pygame.transform.scale(frame, (w, h)))
 
-    ############################################################################################################################################
-
-        # État de l’anim
-        self.down_playing = False       # en lecture ?
-        self.down_can_restart = True    # autorisé à redémarrer sur prochain appui ?
-        self.down_index = 0             # frame courante
-        self.down_timer = 0.0           # chrono pour avancer
-        self.down_frame_time = 0.06     # durée d'une frame (secondes)
+        self.down_playing = False
+        self.down_can_restart = True
+        self.down_index = 0
+        self.down_timer = 0.0
+        self.down_frame_time = 0.06
 
         self.right_index = 0
         self.right_timer = 0.0
@@ -90,16 +80,34 @@ class Player:
 
         self._space_was_down = False
         self._combo_was_active = False
-        self.facing_right = True 
+        self.facing_right = True
+
+        # Dash
+        self.dashing = False
+        self.dash_timer = 0.0
+        self.dash_duration = 0.3
+        self.dash_speed = 500
 
     def handle_input(self, dt):
         keys = pygame.key.get_pressed()
         down_now  = keys[pygame.K_DOWN]
         right_now = keys[pygame.K_RIGHT]
-        left_now = keys[pygame.K_LEFT]
+        left_now  = keys[pygame.K_LEFT]
         space_now = keys[pygame.K_SPACE]
-        space_pressed = space_now and not self._space_was_down  # appui instantané
+        space_pressed = space_now and not self._space_was_down
         combo_now = down_now and space_now and self.on_ground and len(self.down_frames) >= 4
+
+        # Dash en cours → ignore les autres inputs
+        if self.dashing:
+            self.dash_timer -= dt
+            dash_dx = self.dash_speed * dt if self.facing_right else -self.dash_speed * dt
+            self.rect.x += int(dash_dx)
+            self.image = self.down_frames[3]  # ← garde la frame du dash
+            if self.dash_timer <= 0:
+                self.dashing = False
+            self._space_was_down = space_now
+            self._combo_was_active = combo_now
+            return
 
         # Déplacements horizontaux
         dx = 0
@@ -114,18 +122,15 @@ class Player:
         elif dx < 0:
             self.facing_right = False
 
-        # --- Cas spécial ↓ + Espace : montrer sonic_3.png (sans saut, sans anim) ---
         if combo_now:
-            self.image = self.down_frames[3]  # sonic_3.png
+            self.image = self.down_frames[3]
         else:
-            # Saut : seulement à l'appui, et seulement si ↓ n'est pas tenue
             if space_pressed and self.on_ground and not down_now:
                 self.vel_y = self.jump_velocity
                 self.on_ground = False
                 if self.jump_sound:
                     self.jump_sound.play()
 
-            # Animation ↓ normale : 0 -> 2, puis fige
             if down_now and self.on_ground and self.down_frames:
                 max_index = min(2, len(self.down_frames) - 1)
 
@@ -140,14 +145,12 @@ class Player:
                     while self.down_timer >= self.down_frame_time and self.down_index < max_index:
                         self.down_timer -= self.down_frame_time
                         self.down_index += 1
-
                     self.image = self.down_frames[self.down_index]
                     if self.down_index == max_index:
                         self.down_playing = False
                 else:
                     self.image = self.down_frames[self.down_index]
             else:
-                # reset + image par défaut
                 self.down_playing = False
                 self.down_can_restart = True
                 self.down_index = 0
@@ -162,7 +165,6 @@ class Player:
                         if self.right_index >= len(self.right_frames):
                             self.right_index = 8
                     self.image = self.right_frames[self.right_index]
-                    
 
                 elif self.on_ground and self.left_frames and dx < 0:
                     self.left_timer += dt
@@ -174,12 +176,10 @@ class Player:
                     self.image = self.left_frames[self.left_index]
 
                 else:
-                    # si on ne marche pas à droite → image par défaut
                     self.right_index = 0
                     self.left_index = 0
                     self.right_timer = 0.0
                     self.left_timer = 0.0
-
                     if self.facing_right:
                         self.image = self.default_img
                     else:
@@ -190,35 +190,33 @@ class Player:
                 if self.run_sound:
                     if is_running_now:
                         if not self._is_running_sound:
-                            self.run_sound.play(-1)   # boucle tant qu'on court
+                            self.run_sound.play(-1)
                             self._is_running_sound = True
                     else:
                         if self._is_running_sound:
                             self.run_sound.stop()
                             self._is_running_sound = False
 
-        # --- DÉCLENCHEMENT DU DASH À LA RELÂCHE DE LA COMBO ↓+Espace ---
+        # Déclenchement du dash à la relâche de la combo ↓+Espace
         if self._combo_was_active and not combo_now:
-            self.rect.x += 150 if self.facing_right else -150
-            
+            self.dashing = True
+            self.dash_timer = self.dash_duration
+
         self._space_was_down = space_now
         self._down_was_down = down_now
         self._combo_was_active = combo_now
 
     def physics(self, dt, floor_y=700, collision_rects=None):
-        # Gravité
         self.vel_y += self.gravity * dt
         self.rect.y += int(self.vel_y * dt)
 
         self.on_ground = False
 
-        # Collision sol de base
         if self.rect.bottom >= floor_y:
             self.rect.bottom = floor_y
             self.vel_y = 0
             self.on_ground = True
 
-        # Collisions avec les objets Tiled
         if collision_rects:
             for rect in collision_rects:
                 if self.rect.colliderect(rect):
@@ -230,8 +228,9 @@ class Player:
                         self.rect.top = rect.bottom
                         self.vel_y = 0
 
-    def draw(self, window):
+    def draw(self, window, cam_x=0, cam_y=0):
+        draw_rect = self.rect.move(-cam_x, -cam_y)
         if self.image:
-            window.blit(self.image, self.rect)
+            window.blit(self.image, draw_rect)
         else:
-            pygame.draw.rect(window, (0, 120, 255), self.rect, border_radius=6)
+            pygame.draw.rect(window, (0, 120, 255), draw_rect, border_radius=6)
